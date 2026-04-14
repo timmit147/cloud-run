@@ -5,11 +5,10 @@ const cors = require("cors");
 
 const app = express();
 
-// ✅ IMPORTANT for browser frontend (GitHub Pages)
 app.use(cors());
 app.use(express.json());
 
-// 🧠 Health check route (always test this first)
+// Health check
 app.get("/", (req, res) => {
   res.json({
     status: "ok",
@@ -17,23 +16,21 @@ app.get("/", (req, res) => {
   });
 });
 
+// Load routes dynamically
 const routesPath = path.join(__dirname, "routes");
 
-// 🧠 Safety check: folder exists
 if (fs.existsSync(routesPath)) {
   fs.readdirSync(routesPath).forEach((file) => {
     if (file.endsWith(".js")) {
-      console.log("Loading route:", file);
-
       const route = require(`./routes/${file}`);
       app.use("/", route);
     }
   });
 } else {
-  console.log("⚠️ routes folder not found");
+  console.log("routes folder not found");
 }
 
-// 🚀 Cloud Run port
+// Cloud Run port
 const port = process.env.PORT || 8080;
 
 app.listen(port, () => {
