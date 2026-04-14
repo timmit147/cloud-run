@@ -1,44 +1,63 @@
 const express = require("express");
 const router = express.Router();
-const sendMail = require("../contact");
 
-// Debug: check of de route bereikbaar is
-router.get("/contact", (req, res) => {
-  res.json({
-    ok: true,
-    route: "/contact",
-    method: "GET",
-    message: "Contact route is alive"
-  });
-});
+/**
+ * Helper: safe async wrapper
+ * voorkomt dat errors je server slopen
+ */
+const safe = (fn) => (req, res, next) =>
+  Promise.resolve(fn(req, res, next)).catch(next);
 
-router.post("/contact", async (req, res) => {
-  try {
-    const { name, email, subject, message } = req.body;
+/**
+ * POST /contact
+ * voorbeeld contact endpoint
+ */
+router.post(
+  "/contact",
+  safe(async (req, res) => {
+    const { name, email, message } = req.body;
 
-    if (!name || !email || !subject || !message) {
+    // 🛡️ basic validation
+    if (!name || !email || !message) {
       return res.status(400).json({
         ok: false,
-        error: "Missing fields",
-        received: { name, email, subject, message }
+        error: "name, email and message are required"
       });
     }
 
-    await sendMail(name, email, subject, message);
+    if (typeof email !== "string" || !email.includes("@")) {
+      return res.status(400).json({
+        ok: false,
+        error: "invalid email"
+      });
+    }
 
-    return res.status(200).json({
+    // 🧠 hier zou je normaal doen:
+    // - email versturen (Nodemailer / Gmail API)
+    // - opslaan in DB
+    // - webhook sturen
+
+    console.log("📩 New contact message:", {
+      name,
+      email,
+      message
+    });
+
+    return res.json({
       ok: true,
-      message: "Email sent successfully"
+      message: "Message received successfully"
     });
-  } catch (err) {
-    console.error("CONTACT ROUTE ERROR:", err);
+  })
+);
 
-    return res.status(500).json({
-      ok: false,
-      error: "Email failed",
-      details: err.message
-    });
-  }
+/**
+ * GET /contact (test route)
+ */
+router.get("/contact", (req, res) => {
+  res.json({
+    ok: true,
+    message: "contact route is working"
+  });
 });
 
 module.exports = router;
