@@ -5,34 +5,30 @@ const cors = require("cors");
 
 const app = express();
 
-app.use(cors());
 app.use(express.json());
+
+// CORS (veilig)
+app.use(cors({
+  origin: "*", // later kun je dit beperken naar je domain
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type"]
+}));
 
 // Health check
 app.get("/", (req, res) => {
-  res.json({
-    status: "ok",
-    message: "server is running"
-  });
+  res.json({ status: "ok" });
 });
 
-// Load routes dynamically
+// AUTO LOAD ROUTES (MAG JE NOOIT MEER AANRAKEN)
 const routesPath = path.join(__dirname, "routes");
 
-if (fs.existsSync(routesPath)) {
-  fs.readdirSync(routesPath).forEach((file) => {
-    if (file.endsWith(".js")) {
-      const route = require(`./routes/${file}`);
-      app.use("/", route);
-    }
-  });
-} else {
-  console.log("routes folder not found");
-}
+fs.readdirSync(routesPath).forEach((file) => {
+  if (file.endsWith(".js")) {
+    const route = require(`./routes/${file}`);
+    app.use("/", route);
+  }
+});
 
 // Cloud Run port
 const port = process.env.PORT || 8080;
-
-app.listen(port, () => {
-  console.log("Server running on port", port);
-});
+app.listen(port, () => console.log("Server running on", port));
