@@ -5,24 +5,18 @@ const transporter = nodemailer.createTransport({
   port: 465,
   secure: true,
   auth: {
-    user: "timmeeuwsen.dev@gmail.com",
-    pass: "JOUW_APP_PASSWORD_HIER" // zonder spaties
-  }
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_PASS,
+  },
 });
 
 async function sendMail(name, email, message) {
   return transporter.sendMail({
-    from: `"Website Contact" <timmeeuwsen.dev@gmail.com>`,
-    to: "timmeeuwsen.dev@gmail.com",
+    from: `"Website Contact" <${process.env.GMAIL_USER}>`,
+    to: process.env.GMAIL_USER,
     replyTo: email,
     subject: `Nieuw bericht van ${name}`,
-    text: `
-Naam: ${name}
-Email: ${email}
-
-Bericht:
-${message}
-    `
+    text: `Naam: ${name}\nEmail: ${email}\n\nBericht:\n${message}`,
   });
 }
 
