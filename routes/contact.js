@@ -3,21 +3,16 @@ const nodemailer = require("nodemailer");
 
 const router = express.Router();
 
-// 📩 CONTACT FORM ENDPOINT
 router.post("/contact", async (req, res) => {
   try {
-    const { name, email, message } = req.body;
+    const { name, email, subject, message } = req.body;
 
     if (!name || !email || !message) {
-      return res.status(400).json({
-        ok: false,
-        error: "Missing fields"
-      });
+      return res.status(400).json({ ok: false, error: "missing fields" });
     }
 
-    // ✉️ SMTP setup (Gmail example)
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      service: "hotmail",
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
@@ -27,7 +22,8 @@ router.post("/contact", async (req, res) => {
     await transporter.sendMail({
       from: `"Website Contact" <${process.env.EMAIL_USER}>`,
       to: process.env.EMAIL_USER,
-      subject: `Nieuwe aanvraag van ${name}`,
+      replyTo: email,
+      subject: subject || "Nieuw contactformulier",
       text: `
 Naam: ${name}
 Email: ${email}
