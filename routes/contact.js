@@ -1,0 +1,48 @@
+const express = require("express");
+const nodemailer = require("nodemailer");
+
+const router = express.Router();
+
+// 📩 CONTACT FORM ENDPOINT
+router.post("/contact", async (req, res) => {
+  try {
+    const { name, email, message } = req.body;
+
+    if (!name || !email || !message) {
+      return res.status(400).json({
+        ok: false,
+        error: "Missing fields"
+      });
+    }
+
+    // ✉️ SMTP setup (Gmail example)
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+
+    await transporter.sendMail({
+      from: `"Website Contact" <${process.env.EMAIL_USER}>`,
+      to: process.env.EMAIL_USER,
+      subject: `Nieuwe aanvraag van ${name}`,
+      text: `
+Naam: ${name}
+Email: ${email}
+
+Bericht:
+${message}
+      `
+    });
+
+    return res.json({ ok: true });
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ ok: false });
+  }
+});
+
+module.exports = router;
