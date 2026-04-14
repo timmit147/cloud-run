@@ -1,34 +1,44 @@
-const nodemailer = require("nodemailer");
+const express = require("express");
+const router = express.Router();
+const sendMail = require("../contact");
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_PASS,
-  },
+// Debug: check of de route bereikbaar is
+router.get("/contact", (req, res) => {
+  res.json({
+    ok: true,
+    route: "/contact",
+    method: "GET",
+    message: "Contact route is alive"
+  });
 });
 
-async function sendMail(name, email, subject, message) {
-  if (!name || !email || !subject || !message) {
-    throw new Error("Missing fields");
+router.post("/contact", async (req, res) => {
+  try {
+    const { name, email, subject, message } = req.body;
+
+    if (!name || !email || !subject || !message) {
+      return res.status(400).json({
+        ok: false,
+        error: "Missing fields",
+        received: { name, email, subject, message }
+      });
+    }
+
+    await sendMail(name, email, subject, message);
+
+    return res.status(200).json({
+      ok: true,
+      message: "Email sent successfully"
+    });
+  } catch (err) {
+    console.error("CONTACT ROUTE ERROR:", err);
+
+    return res.status(500).json({
+      ok: false,
+      error: "Email failed",
+      details: err.message
+    });
   }
+});
 
-  return transporter.sendMail({
-    from: `"Tim Meeuwsen Contact" <${process.env.GMAIL_USER}>`,
-    to: process.env.GMAIL_USER,
-    replyTo: email,
-    subject: `Contactformulier: ${subject}`,
-    text: `Naam: ${name}\nEmail: ${email}\nOnderwerp: ${subject}\n\nBericht:\n${message}`,
-    html: `
-      <h2>Nieuw bericht via contactformulier</h2>
-      <p><strong>Naam:</strong> ${name}</p>
-      <p><strong>Email:</strong> ${email}</p>
-      <p><strong>Onderwerp:</strong> ${subject}</p>
-      <p><strong>Bericht:</strong><br>${message.replace(/\n/g, "<br>")}</p>
-    `,
-  });
-}
-
-module.exports = sendMail;
+module.exports = router;
